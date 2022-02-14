@@ -11,6 +11,8 @@
 
 #include "fsio.h"
 
+#include "log.c"
+#include "log.h"
 #include "stringbuffer.h"
 #include "stringfn.h"
 
@@ -153,15 +155,9 @@ struct ScriptExecResult scriptexec_run_with_options(const char *script, struct S
   result.err = _scriptexec_read_and_delete_text_file(err_file);
   free(err_file);
 
-
-//result.outs =
-//struct StringFNStrings tr = stringfn_split_lines_and_trim(result.out);
-//result.outs = tr;
-//result.errs = stringfn_split_lines_and_trim(result.err);
-
   result.end = ts64();
   result.dur = result.end - result.start;
-  fprintf(stderr, "<%d> script_file: %s | out bytes: %d | exited %d | dur: %ld ms\n", getpid(), script_file, (int)strlen(result.out), result.code, result.dur);
+  log_debug("<%d> script_file: %s | out bytes: %d | exited %d | dur: %ld ms\n", getpid(), script_file, (int)strlen(result.out), result.code, result.dur);
 
   free(script_file);
   return(result);

@@ -14,6 +14,7 @@
 #include "fsio.h"
 #include "stringbuffer.h"
 #include "stringfn.h"
+//#include "log.h"
 
 struct ScriptExecOptions {
   char *runner;
