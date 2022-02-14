@@ -1,20 +1,26 @@
-#include "fsio.h"
 #include "scriptexec.h"
-#include "stringbuffer.h"
+#include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/time.h>
+#include <time.h>
 #include <unistd.h>
+
+#include "fsio.h"
+
+#include "stringbuffer.h"
+#include "stringfn.h"
+
 
 // private functions
 static struct ScriptExecResult _scriptexec_create_result();
 static char *_scriptexec_read_and_delete_text_file(char *);
 
-struct ScriptExecOptions scriptexec_create_options()
-{
-  struct ScriptExecOptions options =
-  {
+struct ScriptExecOptions scriptexec_create_options(){
+  struct ScriptExecOptions options = {
     .runner = NULL, .working_directory = NULL, .exit_on_error = true, .print_commands = false
   };
 
@@ -22,20 +28,28 @@ struct ScriptExecOptions scriptexec_create_options()
 }
 
 
-struct ScriptExecResult scriptexec_run(const char *script)
-{
+int64_t ts64(void) {
+  struct timeval tv;
+  int            ret = gettimeofday(&tv, NULL);
+
+  if (-1 == ret) {
+    return(-1);
+  }
+  return((int64_t)((int64_t)tv.tv_sec * 1000 + (int64_t)tv.tv_usec / 1000));
+}
+
+
+struct ScriptExecResult scriptexec_run(const char *script){
   struct ScriptExecOptions options = scriptexec_create_options();
 
   return(scriptexec_run_with_options(script, options));
 }
 
 
-struct ScriptExecResult scriptexec_run_with_options(const char *script, struct ScriptExecOptions options)
-{
+struct ScriptExecResult scriptexec_run_with_options(const char *script, struct ScriptExecOptions options){
   struct ScriptExecResult result = _scriptexec_create_result();
 
-  if (script == NULL)
-  {
+  if (script == NULL) {
     result.code = -1;
     return(result);
   }
@@ -44,26 +58,24 @@ struct ScriptExecResult scriptexec_run_with_options(const char *script, struct S
 
   // move to cwd
   char *cwd = getcwd(NULL, 0);
+
   stringbuffer_append_string(buffer, "cd ");
   stringbuffer_append_string(buffer, cwd);
   free(cwd);
   stringbuffer_append(buffer, '\n');
 
   // move to requested working directory
-  if (options.working_directory != NULL)
-  {
+  if (options.working_directory != NULL) {
     stringbuffer_append_string(buffer, "cd ");
     stringbuffer_append_string(buffer, options.working_directory);
     stringbuffer_append(buffer, '\n');
   }
 
-  if (options.exit_on_error)
-  {
+  if (options.exit_on_error) {
     stringbuffer_append_string(buffer, "set -e\n");
   }
 
-  if (options.print_commands)
-  {
+  if (options.print_commands) {
     stringbuffer_append_string(buffer, "set -x\n");
   }
 
@@ -73,8 +85,9 @@ struct ScriptExecResult scriptexec_run_with_options(const char *script, struct S
   char template[] = "/tmp/scriptexec_XXXXXX";
   char *dir_name  = mkdtemp(template);
 
-  if (dir_name == NULL)
-  {
+  result.start = ts64();
+
+  if (dir_name == NULL) {
     stringbuffer_release(buffer);
     free(updated_script);
 
@@ -89,9 +102,9 @@ struct ScriptExecResult scriptexec_run_with_options(const char *script, struct S
 
   // write script file
   bool written = fsio_write_text_file(script_file, updated_script);
+
   free(updated_script);
-  if (!written)
-  {
+  if (!written) {
     rmdir(dir_name);
 
     stringbuffer_release(buffer);
@@ -111,8 +124,8 @@ struct ScriptExecResult scriptexec_run_with_options(const char *script, struct S
 
   // create command
   char *runner = options.runner;
-  if (runner == NULL)
-  {
+
+  if (runner == NULL) {
     runner = "sh";
   }
   stringbuffer_clear(buffer);
@@ -124,6 +137,7 @@ struct ScriptExecResult scriptexec_run_with_options(const char *script, struct S
   stringbuffer_append_string(buffer, " 1> ");
   stringbuffer_append_string(buffer, out_file);
   char *command = stringbuffer_to_string(buffer);
+
   stringbuffer_release(buffer);
 
   result.code = system(command);
@@ -132,7 +146,6 @@ struct ScriptExecResult scriptexec_run_with_options(const char *script, struct S
   // delete files
   remove(script_file);
   rmdir(dir_name);
-  free(script_file);
 
   // read out/err
   result.out = _scriptexec_read_and_delete_text_file(out_file);
@@ -140,19 +153,37 @@ struct ScriptExecResult scriptexec_run_with_options(const char *script, struct S
   result.err = _scriptexec_read_and_delete_text_file(err_file);
   free(err_file);
 
+
+//result.outs =
+//struct StringFNStrings tr = stringfn_split_lines_and_trim(result.out);
+//result.outs = tr;
+//result.errs = stringfn_split_lines_and_trim(result.err);
+
+  result.end = ts64();
+  result.dur = result.end - result.start;
+  fprintf(stderr, "<%d> script_file: %s | out bytes: %d | exited %d | dur: %ld ms\n", getpid(), script_file, (int)strlen(result.out), result.code, result.dur);
+
+  free(script_file);
   return(result);
 } /* scriptexec_run_with_options */
 
-static struct ScriptExecResult _scriptexec_create_result()
-{
-  struct ScriptExecResult result = { .code = 0, .out = NULL, .err = NULL };
+static struct ScriptExecResult _scriptexec_create_result(){
+  struct ScriptExecResult result = {
+    .code  = 0,
+    .outs  = { NULL },
+    .errs  = { NULL },
+    .out   = NULL,
+    .err   = NULL,
+    .dur   = -1,
+    .start = -1,
+    .end   = -1
+  };
 
   return(result);
 }
 
 
-static char *_scriptexec_read_and_delete_text_file(char *file)
-{
+static char *_scriptexec_read_and_delete_text_file(char *file){
   char *text = fsio_read_text_file(file);
 
   remove(file);

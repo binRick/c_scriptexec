@@ -4,7 +4,7 @@
 #include <string.h>
 
 
-void test_run(void (*fn)(void))
+void test_run(void ( *fn )(void))
 {
   printf("Test ... ");
   fn();

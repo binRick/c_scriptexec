@@ -5,7 +5,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-void test_run(void (*fn)());
+void test_run(void ( *fn )());
 void test_fail();
 void assert_true(bool);
 
