@@ -8,6 +8,7 @@
     "exec",
     "module"
   ],
+  "install": "echo OK",
   "license": "MIT",
   "files": [
     "include/scriptexec.h",
