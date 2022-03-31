@@ -9,8 +9,6 @@
     "module"
   ],
   "license": "MIT",
-  "makefile": "Makefile",
-  "install": "cmake . && make && make install",
   "files": [
     "include/scriptexec.h",
     "include/log.h",
