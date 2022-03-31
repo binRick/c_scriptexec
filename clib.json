@@ -1,0 +1,41 @@
+{
+  "name": "c_scriptexec",
+  "version": "latest",
+  "repo": "binRick/c_scriptexec",
+  "description": "C Executor",
+  "keywords": [
+    "c",
+    "exec",
+    "module"
+  ],
+  "license": "MIT",
+  "makefile": "Makefile",
+  "install": "cmake . && make && make install",
+  "files": [
+    "include/scriptexec.h",
+    "include/log.h",
+    "include/log.c",
+    "example/example.c",
+    "src/scriptexec.c",
+    "tests/test.c",
+    "tests/test_exit_on_error_break.c",
+    "tests/test_exit_on_error_ignore.c",
+    "tests/test_exit_on_error_valid.c",
+    "tests/test_invalid_command.c",
+    "tests/test_null_script.c",
+    "tests/test_stability.c",
+    "tests/test_valid_command.c",
+    "tests/test_valid_multiple_commands.c",
+    "tests/test_valid_multiple_commands_default_options.c",
+    "tests/test_valid_multiple_commands_with_invalid_runner.c",
+    "tests/test_valid_multiple_commands_with_print.c",
+    "tests/test_valid_multiple_commands_with_valid_runner.c"
+  ],
+  "dependencies": {
+    "clibs/module": "0.1.1",
+    "4thel00z/env.h": "0.1.0",
+    "clibs/flag": "0.0.1",
+    "binRick/c_base64": "9e7234ffb480fe91cc932032b46ea45a1de2a194",
+    "binRick/c_optparse": "ba0b01b8d484e5477c0068bb9e5178175d8593e0"
+  }
+}
