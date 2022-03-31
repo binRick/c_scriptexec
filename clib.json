@@ -8,8 +8,9 @@
     "exec",
     "module"
   ],
-  "install": "echo OK",
   "license": "MIT",
+  "makefile": "Makefile",
+  "install": "make install",
   "files": [
     "include/scriptexec.h",
     "include/log.h",
