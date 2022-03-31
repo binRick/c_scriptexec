@@ -13,7 +13,7 @@
     "include/scriptexec.h",
     "include/log.h",
     "include/log.c",
-    "example/example.c",
+    "examples/example.c",
     "src/scriptexec.c",
     "tests/test.c",
     "tests/test_exit_on_error_break.c",
